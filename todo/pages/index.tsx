@@ -7,8 +7,10 @@ import {
   TextField,
   Container,
   FormControl,
-  Box, ListItem, List, ListItemText, ListItemButton, ListItemIcon, Checkbox,
+  Box, ListItem, List, ListItemText, ListItemButton, ListItemIcon, Checkbox, IconButton,
 } from "@mui/material";
+import DeleteIcon from '@mui/icons-material/Delete';
+import produce, { finishDraft } from 'immer';
 
 const getRandomId = () => Math.floor(Math.random()*1000000);
 
@@ -28,27 +30,32 @@ const Home: NextPage = () => {
 
   const [todo, setTodo] = useState<string>("");
   const [listToDO, setListToDo] = useState<ITodo[]>([]);
-  // setTodoList(produce(draft => {
-  //   draft.push({ name: name.trim(), isCompleted: false, id: idCount })
-  // }))
+
   const addToDoToList = (todo: ITodo) => {
-    setListToDo((prevTodo: ITodo[]) => {
-      return [...prevTodo, todo];
-    });
-  };
+    setListToDo(produce(draft =>{
+ draft.push(todo)
+
+    }))
+  }
 
 
   const setDone = (itemId: number, done: boolean) => {
-      setListToDo((prevTodo: ITodo[]) => {
-          const item = prevTodo.find((item)=>item.id===itemId);
-          if (!item){
-            return prevTodo;
-          }
-          item.isDone = done;
-          return [...prevTodo];
-      });
-  }
+      setListToDo(produce((draft)=>{
+        const index = draft.findIndex((item) => item.id === itemId);
+        draft[index].isDone = done;
 
+
+      }))}
+      
+
+  const deleteItem = (itemId: number) => {
+    setListToDo(produce((draft)=>{
+        const index = draft.findIndex((item) => item.id === itemId);
+        draft.splice(index,1)
+    }))
+}
+
+const handleDelete = (id: number) => () => deleteItem(id);
   const handleSubmit = (e: any) => {
     e.preventDefault();
     // zapobiegaj przeładowaniu
@@ -62,34 +69,47 @@ const Home: NextPage = () => {
   return (
     <>
   <Container maxWidth="sm" sx={{ marginTop: 2 }}>
-    <FormControl
-      onSubmit={handleSubmit}
-      component="form"
-      sx={{ marginTop: "10px", width: "100%" }}
-    >
-      <TextField
-        fullWidth
-        id="fullWidth"
-        focused
-        value={todo}
-        onChange={handleTodo}
-      />
-    </FormControl>
-        <List>
-            {listToDO.map((item) =>
-                <ListItemButton key={item.id} role={undefined} onClick={handleToggle(item.id, !item.isDone)} dense>
-                  <ListItemIcon>
-                    <Checkbox
-                      edge="start"
-                      checked={item.isDone}
-                      tabIndex={-1}
-                      disableRipple
-                    />
-                  </ListItemIcon>
-                  <ListItemText primary={item.todo} />
-                </ListItemButton>
-            )}
-        </List>
+  <>
+            <FormControl
+                onSubmit={handleSubmit}
+                component="form"
+                sx={{marginTop: "10px", width: "100%"}}
+            >
+                <TextField
+                    fullWidth
+                    id="fullWidth"
+                    focused
+                    value={todo}
+                    onChange={handleTodo}
+                />
+            </FormControl>
+            <List>
+                {listToDO.map((item) =>
+                    <ListItem
+                        key={item.id}
+                        secondaryAction={
+                            <IconButton edge="end" aria-label="delete" onClick={handleDelete(item.id)}>
+                                <DeleteIcon/>
+                            </IconButton>
+                        }
+                        disablePadding
+                    >
+                        <ListItemButton  role={undefined} onClick={handleToggle(item.id, !item.isDone)}
+                                        dense>
+                            <ListItemIcon>
+                                <Checkbox
+                                    edge="start"
+                                    checked={item.isDone}
+                                    tabIndex={-1}
+                                    disableRipple
+                                />
+                            </ListItemIcon>
+                            <ListItemText primary={item.todo}/>
+                        </ListItemButton>
+                    </ListItem>
+                )}
+            </List>
+        </>
       </Container>
       </>
   )
