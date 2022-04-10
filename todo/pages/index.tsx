@@ -21,7 +21,8 @@ import {
 import DeleteIcon from "@mui/icons-material/Delete";
 import EditIcon from "@mui/icons-material/Edit";
 import produce, { finishDraft } from "immer";
-import { FilterList } from "@mui/icons-material";
+import { FilterList, ShowChart } from "@mui/icons-material";
+import AlertDialog from "../components/alert";
 
 const getRandomId = () => Math.floor(Math.random() * 1000000);
 
@@ -34,12 +35,14 @@ interface ITodo {
   isDone: boolean;
   isEditing?: boolean;
 }
+
 type TabValue = "all" | "done" | "todo";
 
 const Home: NextPage = () => {
   const [todo, setTodo] = useState<string>("");
   const [listToDo, setListToDo] = useState<ITodo[]>([]);
   const [tab, setTab] = useState<TabValue>("all");
+  const [deleteId, setDeleteId] = useState<number | null>(null);
 
   const addToDoToList = (todo: ITodo) => {
     setListToDo(
@@ -63,8 +66,8 @@ const Home: NextPage = () => {
   const deleteItem = (itemId: number) => {
     setListToDo(
       produce((draft) => {
-        const index = draft.findIndex((item) => item.id === itemId);
-        draft.splice(index, 1);
+        const item = draft.findIndex((item) => item.id === itemId);
+        draft.splice(item, 1);
       })
     );
   };
@@ -90,7 +93,7 @@ const Home: NextPage = () => {
   };
   const handleStopEdit = (id: number) => (e: any) => stopEditItem(id, e);
   const handleStartEdit = (id: number) => () => startEditItem(id);
-  const handleDelete = (id: number) => () => deleteItem(id);
+  const handleDelete = (id: number) => () => setDeleteId(id);
   const handleSubmit = (e: any) => {
     e.preventDefault();
     // zapobiegaj przeładowaniu
@@ -103,7 +106,7 @@ const Home: NextPage = () => {
     addToDoToList(todoObj);
     setTodo("");
   };
-  const fillterList = useMemo((): ITodo[] => {
+  const filterList = useMemo((): ITodo[] => {
     if (tab === "all") {
       console.log([...listToDo]);
       return [...listToDo];
@@ -149,7 +152,7 @@ const Home: NextPage = () => {
             />
           </form>
           <List>
-            {fillterList.map((item) => (
+            {filterList.map((item) => (
               <ListItem
                 key={item.id}
                 secondaryAction={
@@ -212,6 +215,18 @@ const Home: NextPage = () => {
           </List>
         </>
       </Container>
+      {deleteId && (
+        <AlertDialog
+          open={true}
+          text={"Are you sure you want to delete this item?"}
+          title={"Delete item"}
+          onClickYes={() => {
+            deleteItem(deleteId);
+            setDeleteId(null);
+          }}
+          onClickNo={() => setDeleteId(null)}
+        />
+      )}
     </>
   );
 };
