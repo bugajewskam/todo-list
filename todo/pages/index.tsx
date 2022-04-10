@@ -10,6 +10,7 @@ import {
   Box, ListItem, List, ListItemText, ListItemButton, ListItemIcon, Checkbox, IconButton,
 } from "@mui/material";
 import DeleteIcon from '@mui/icons-material/Delete';
+import EditIcon from '@mui/icons-material/Edit';
 import produce, { finishDraft } from 'immer';
 
 const getRandomId = () => Math.floor(Math.random()*1000000);
@@ -29,7 +30,7 @@ const Home: NextPage = () => {
 
 
   const [todo, setTodo] = useState<string>("");
-  const [listToDO, setListToDo] = useState<ITodo[]>([]);
+  const [listToDo, setListToDo] = useState<ITodo[]>([]);
 
   const addToDoToList = (todo: ITodo) => {
     setListToDo(produce(draft =>{
@@ -55,6 +56,24 @@ const Home: NextPage = () => {
     }))
 }
 
+const startEditItem = (itemId:number)=>{
+setListToDo(produce((draft)=>{
+  const index = draft.findIndex((item)=>item.id ===itemId)
+  draft[index].isEditing = true
+}))
+}
+
+const stopEditItem=(itemId:number)=>{
+  setListToDo(produce((draft)=>{
+    const index=draft.findIndex((item)=>item.id ===itemId)
+    draft[index].todo = todo
+    draft[index].isEditing = false
+    setTodo('')
+
+  }))
+}
+const handleStopEdit = (id:number) =>()=>stopEditItem(id)
+const handleStartEdit = (id:number)=>()=>startEditItem(id)
 const handleDelete = (id: number) => () => deleteItem(id);
   const handleSubmit = (e: any) => {
     e.preventDefault();
@@ -65,6 +84,7 @@ const handleDelete = (id: number) => () => deleteItem(id);
   }
 
   const handleTodo = (e: any) => setTodo(e.target.value);
+  const handleEdit=(e:any)=>setTodo(e.target.value)
   const handleToggle = (id: number, done: boolean) => () => setDone(id, done);
   return (
     <>
@@ -84,13 +104,17 @@ const handleDelete = (id: number) => () => deleteItem(id);
                 />
             </FormControl>
             <List>
-                {listToDO.map((item) =>
+                {listToDo.map((item) =>
                     <ListItem
                         key={item.id}
                         secondaryAction={
-                            <IconButton edge="end" aria-label="delete" onClick={handleDelete(item.id)}>
+                           <> <IconButton edge="end" aria-label="delete" onClick={handleDelete(item.id)}>
                                 <DeleteIcon/>
                             </IconButton>
+
+                            <IconButton edge="end" aria-label="delete" onClick={handleStartEdit(item.id)}>
+                            <EditIcon/>
+                        </IconButton></>
                         }
                         disablePadding
                     >
@@ -104,7 +128,28 @@ const handleDelete = (id: number) => () => deleteItem(id);
                                     disableRipple
                                 />
                             </ListItemIcon>
-                            <ListItemText primary={item.todo}/>
+                            {!item.isEditing &&
+                            <ListItemText primary={item.todo}/>}
+                            {item.isEditing &&
+                            <ListItemText>
+                              <FormControl onSubmit={handleStopEdit(item.id)} component="form">
+                              <Box
+      sx={{
+        width: 500,
+        maxWidth: '100%',
+      }}
+    >
+      <TextField  id="fullWidth" key={"editeValue"} defaultValue={item.todo} onChange={handleEdit} />
+    </Box>
+
+
+
+
+                          </FormControl>
+                              
+                              
+                              </ListItemText>}
+                            {'}'}
                         </ListItemButton>
                     </ListItem>
                 )}
